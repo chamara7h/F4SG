@@ -1,0 +1,40 @@
+<header id="title-block-header">
+$if(title)$<h1 class="title"><b>$title$</b></h1>$endif$
+$if(subtitle)$
+<p class="subtitle">$subtitle$</p>
+$endif$
+
+$for(by-author)$
+<p class="author"><b>$by-author.name.literal$</b></p>
+$if(by-author.email)$
+<a class="author_email" href="mailto:#" style="font-size: 10pt;">$by-author.email$</a>
+$endif$
+
+$for(by-author.affiliations)$
+<p class="affiliation" style="font-size: 10pt;">
+  $if(it.url)$
+    <a href="$it.url$">
+  $endif$ 
+  $it.name$
+  $if(it.url)$
+     </a>
+  $endif$
+</p>
+$endfor$
+
+$endfor$
+
+$if(email)$
+<p class="date">$email$</p>
+$endif$
+
+$if(date)$
+<p class="date">$date$</p>
+$endif$
+$if(abstract)$
+<div class="abstract">
+<div class="abstract-title">$abstract-title$</div>
+$abstract$
+</div>
+$endif$
+</header>

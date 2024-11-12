@@ -1,0 +1,122 @@
+---
+title: "COVID Forecasting"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Data and Visualize
+
+
+```{r}
+covid_data = read.csv(file = "./covid-data-us-national.csv")
+
+head(covid_data)
+```
+
+Visualizing forecasting target
+
+```{r}
+library(ggplot2)
+# Basic line plot with points
+ggplot(data=covid_data, aes(x=epiweek, y=death_jhu_incidence, group=1)) +
+  geom_line()+
+  geom_point()
+```
+
+Visualizing features/predictors, e.g. cases
+
+```{r}
+library(ggplot2)
+# Basic line plot with points
+ggplot(data=covid_data, aes(x=epiweek, y=covid_cases, group=1)) +
+  geom_line()+
+  geom_point()
+```
+
+
+## Data pre-processing
+
+Data pre-processing: scaling input
+
+```{r}
+min_max_norm <- function(x) {
+    (x - min(x)) / (max(x) - min(x))
+  }
+covid_data = as.data.frame(lapply(covid_data[4:7], min_max_norm))
+time.series = covid_data$death_jhu_incidence
+head(covid_data)
+```
+
+## Modeling with ARIMA 
+
+We fit ARIMA and predict for epiweeks 202030 to 202043
+
+```{r}
+pred_func <- function(week, order, k_ahead=1){
+    train.series = time.series[1:week-k_ahead]
+    model = arima(train.series, order = order)
+    pred = predict(model, k_ahead)
+    return(pred$pred)
+}
+
+arima.preds = c()
+order = c(2,2,2)  # can be tuned
+for (w in 30:40){
+    arima.preds = append(arima.preds, pred_func(w, order))
+}
+
+arima.preds
+```
+## Modeling with Off-the-shelf Neural Network
+
+Now we will use neural networks to predict future forecasts from features of current week.
+
+```{r}
+library(neuralnet)
+library(dplyr)
+
+make.dataset <- function(ahead=1) {
+    full.dataset = as.data.frame(covid_data[(10-ahead):(40-ahead),])
+    labels = covid_data$death_jhu_incidence[10:40]
+    full.dataset$labels = labels
+    return(full.dataset)
+}
+
+dataset = make.dataset()
+head(dataset)
+```
+
+Predict for epiweeks 202030 to 202043
+
+```{r}
+nn_train <- function(w, hidden = c(10, 40)) {
+    model = neuralnet(labels~death_jhu_incidence+mobility+totalTests+covid_cases,
+                      data=dataset[1:(w-10),], hidden=hidden, linear.output=T)
+    return(model)
+}
+
+nn.preds = c()
+for(w in 30:40){
+    m = nn_train(w)
+    nn.preds = append(nn.preds, predict(m, dataset[w-10+1,]))
+}
+
+nn.preds
+```
+
+## Evaluation
+
+```{r}
+ground.truths = covid_data$death_jhu_incidence[30:40]
+ground.truths
+
+arima.rmse = sqrt(mean((arima.preds-ground.truths)^2))
+nn.rmse = sqrt(mean((nn.preds-ground.truths)^2))
+print(c("Arima RMSE:", arima.rmse))
+print(c("NN RMSE", nn.rmse))
+```
+
+Our ARIMA is better than an off-the-shelf simple neural network. Can we do better?

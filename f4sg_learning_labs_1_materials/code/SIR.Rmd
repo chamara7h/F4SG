@@ -1,0 +1,67 @@
+---
+title: "SIR"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Credits
+
+This code has been adapted from http://epirecip.es/epicookbook/chapters/sir/r_desolve
+Author: Simon Frost
+
+## Mechanistic model example: SIR model
+
+Define the dynamics of SIR model
+
+
+```{r}
+library(deSolve)
+library(reshape2)
+sir_ode <- function(times,init,parms){
+  with(as.list(c(parms,init)), {
+  # ODEs
+  dS <- -beta*S*I
+  dI <- beta*S*I-gamma*I
+  dR <- gamma*I
+  list(c(dS,dI,dR))
+  })
+}
+```
+
+Set parameters for $S_0, I_0, R_0, \beta$ and $\gamma$, initial conditions, and simulation time 
+
+```{r}
+parms <- c(beta=0.1,gamma=0.05)
+init <- c(S=0.99,I=0.01,R=0) 
+times <- seq(0,200,length.out=2001)
+
+sir_out <- lsoda(init,times,sir_ode,parms)
+sir_out_long <- melt(as.data.frame(sir_out),"time")
+```
+
+Plot the state dynamics over time.
+
+```{r}
+library(ggplot2)
+ggplot(sir_out_long,aes(x=time,y=value,colour=variable,group=variable))+
+  # Add line
+  geom_line(lwd=2)+
+  #Add labels
+  xlab("Time")+ylab("Number")
+```
+
+What if we had a more transmissible virus? We estimate $\beta = 0.25$.
+
+```{r}
+parms <- c(beta=0.25,gamma=0.05)
+
+sir_out <- lsoda(init,times,sir_ode,parms)
+sir_out_long <- melt(as.data.frame(sir_out),"time")
+ggplot(sir_out_long,aes(x=time,y=value,colour=variable,group=variable))+
+  # Add line
+  geom_line(lwd=2)+
+  #Add labels
+  xlab("Time")+ylab("Number")
+```

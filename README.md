@@ -46,6 +46,10 @@ Here are the recorded sessions for each of our Learning Labs, along with the ins
    **Instructor**: Sankalp Gilda  
    [Watch on YouTube](https://youtu.be/JivcR00sDMw)
 
+9. **Learning Lab Session 9 - Predictive Analyses using R packages bsvars & bsvarSIGNs**  
+   **Instructor**: Tomasz Woźniak  
+   [Watch on YouTube](https://youtu.be/JivcR00sDMw)
+
 ## What You’ll Find Here
 
 This repository contains:
